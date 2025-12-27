@@ -3,11 +3,15 @@
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
+const dotenv = require('dotenv');
+const env = process.env.NODE_ENV || 'development';
+dotenv.config({ path: '.env.' + env });
+
 export default defineConfig({
-  schema: "prisma/schema.prisma",
+  schema: "database/schema.prisma",
   migrations: {
-    path: "prisma/migrations",
-    seed: "tsx prisma/seed.ts"
+    path: "database/migrations",
+    seed: "tsx database/seed.ts"
   },
   datasource: {
     url: process.env["DATABASE_URL"],
