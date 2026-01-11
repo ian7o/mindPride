@@ -10,25 +10,35 @@ dotenv.config({ path: '.env.' + env });
 const pool = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter: pool });
 
-const userData:  CreateUserDto[] = [
+const userData: Prisma.UserCreateInput[] = [
   {
     name: 'Alice',
     email: 'alice@prisma.io',
+    age: 25,
+    sex: 'F',
+    status: 'ACTIVE',
   },
   {
     name: 'Nilu',
     email: 'nilu@prisma.io',
+    age: 30,
+    sex: 'M',
+    status: 'ACTIVE',
   },
   {
     name: 'Mahmoud',
     email: 'mahmoud@prisma.io',
+    age: 28,
+    sex: 'M',
+    status: 'ACTIVE',
   },
 ];
+
+
 
 async function main() {
   console.log(`Start seeding ...`);
 
-  await prisma.post.deleteMany();
   await prisma.user.deleteMany();
 
   for (const u of userData) {
