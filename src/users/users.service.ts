@@ -2,15 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { EuserStatus } from './utils/enum';
 
 @Injectable()
 export class UsersService {
-
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   create(createUserDto: CreateUserDto) {
-    return this.prisma.user.create({ data: { ...createUserDto, status: EuserStatus.ACTIVE } });
+    return this.prisma.user.create({
+      data: { ...createUserDto, status: 'ACTIVE' },
+    });
   }
 
   findAll() {
@@ -22,7 +22,10 @@ export class UsersService {
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
-    return await this.prisma.user.update({ where: { id }, data: updateUserDto });
+    return await this.prisma.user.update({
+      where: { id: id },
+      data: updateUserDto,
+    });
   }
 
   async remove(id: number) {

@@ -1,4 +1,3 @@
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { PrismaClient, Prisma } from './generated/client';
 
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -34,8 +33,6 @@ const userData: Prisma.UserCreateInput[] = [
   },
 ];
 
-
-
 async function main() {
   console.log(`Start seeding ...`);
 
@@ -54,7 +51,7 @@ main()
     await prisma.$disconnect();
   })
   .catch(async (e) => {
-    console.error("seeder error:",e);
+    console.error('seeder error:', e);
     await prisma.$disconnect();
     process.exit(1);
   });

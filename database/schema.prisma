@@ -9,11 +9,40 @@ datasource db {
 }
 
 model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String
-  age Int
-  sex String
-  createdAt DateTime @default(now())
-  status String
+  id          Int           @id @default(autoincrement())
+  email       String        @unique
+  name        String
+  age         Int
+  sex         String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  status      String
+  chatSession ChatSession[]
+}
+
+enum MessageRole {
+  system
+  user
+  assistant
+  tool
+  function
+}
+
+model Messages {
+  id            Int         @id @default(autoincrement())
+  chatSession   ChatSession @relation(fields: [chatSessionID], references: [id])
+  chatSessionID Int
+  message       String
+  role          MessageRole
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model ChatSession {
+  id        Int        @id @default(autoincrement())
+  user      User       @relation(fields: [userId], references: [id])
+  userId    Int
+  messages  Messages[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
