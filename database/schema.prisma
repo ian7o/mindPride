@@ -8,6 +8,8 @@ datasource db {
   provider = "postgresql"
 }
 
+//TODO: change all ids to uuid
+
 model User {
   id          Int           @id @default(autoincrement())
   email       String        @unique
@@ -30,7 +32,7 @@ enum MessageRole {
 
 model Messages {
   id            Int         @id @default(autoincrement())
-  chatSession   ChatSession @relation(fields: [chatSessionID], references: [id])
+  chatSession   ChatSession @relation(fields: [chatSessionID], references: [id], onDelete: Cascade)
   chatSessionID Int
   message       String
   role          MessageRole

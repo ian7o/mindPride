@@ -14,12 +14,12 @@ export class GroqController {
   constructor(private readonly groqService: GroqService) {}
 
   @Get('intro/:userId')
-  async getGroqChatIntro(@Param('userId') userId: string) {
+  getGroqChatIntro(@Param('userId') userId: string) {
     return this.groqService.getGroqChatIntro(+userId);
   }
 
   @Post('newUserChat/:userId')
-  async newUserChat(
+  newUserChat(
     @Param('userId') userId: string,
     @Body('message') message: string,
   ) {
@@ -27,7 +27,7 @@ export class GroqController {
   }
 
   @Put('/:chatSessionId/:userId')
-  async continueUserChat(
+  continueUserChat(
     @Param('chatSessionId') chatSessionId: string,
     @Param('userId') userId: string,
     @Body('message') message: string,
@@ -35,11 +35,11 @@ export class GroqController {
     return this.groqService.continueUserChat(message, +chatSessionId, +userId);
   }
 
-  @Delete('/:chatSessionId')
-  async deleteUserChat(
+  @Delete('/:chatSessionId/:userId')
+  deleteUserChat(
     @Param('chatSessionId') chatSessionId: string,
-    @Body('message') message: string,
+    @Param('userId') userId: string,
   ) {
-    return this.groqService.newUserChat(message, +chatSessionId);
+    return this.groqService.deleteUserChat(+chatSessionId, +userId);
   }
 }
