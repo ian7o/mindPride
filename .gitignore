@@ -2,6 +2,8 @@
 /dist
 /node_modules
 /build
+/database/generated
+
 
 # Logs
 logs
@@ -49,7 +51,10 @@ pids
 *.seed
 *.pid.lock
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
-report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-/database/generated
+/secrets
+Dockerfile
+compose.yml
+.gitignore
+.dockerIgnore
+.continue

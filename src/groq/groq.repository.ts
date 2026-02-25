@@ -7,7 +7,6 @@ import {
 
 import Groq from 'groq-sdk';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Prisma } from 'database/generated/client';
 import { ChatCompletionMessageParam } from 'groq-sdk/resources/chat.mjs';
 import { ChatSessionDto } from './dto/in/chat-session.dto';
 import { ChatCompletion } from 'groq-sdk/src/resources/chat.js';
@@ -27,79 +26,59 @@ export class GroqRepository {
   private readonly logger = new Logger(GroqRepository.name, {});
 
   async createChatSession(userId: number): Promise<ChatSessionDto> {
-    try {
-      return await this.prisma.chatSession.create({
-        data: {
-          userId: userId,
-        },
-      });
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2003') {
-          this.logger.error(e);
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
 
-          throw new NotFoundException('User not found');
-        }
-      }
-      throw e;
-    }
+    return this.prisma.chatSession.create({ data: { userId } });
   }
 
   async createMessages(createChatMessagesDtos: CreateChatMessagesDto[]) {
-    try {
-      return await this.prisma.messages.createMany({
-        data: createChatMessagesDtos.map((dto) => ({
-          message: dto.message,
-          role: dto.role,
-          chatSessionID: dto.chatSessionId,
-        })),
-      });
-    } catch (e) {
-      if (e instanceof Prisma.PrismaClientKnownRequestError) {
-        if (e.code === 'P2003') {
-          this.logger.error(e);
+    const chatSessionId = createChatMessagesDtos[0]?.chatSessionId;
+    const session = await this.prisma.chatSession.findUnique({
+      where: { id: chatSessionId },
+    });
+    if (!session)
+      throw new NotFoundException('this chatSession Id doesnt exist');
 
-          throw new NotFoundException('this chatSession Id doesnt exist');
-        }
-      }
-      throw e;
-    }
+    return this.prisma.messages.createMany({
+      data: createChatMessagesDtos.map((dto) => ({
+        message: dto.message,
+        role: dto.role,
+        chatSessionID: dto.chatSessionId,
+      })),
+    });
   }
 
   async callGrokApi(
     messages: Array<ChatCompletionMessageParam>,
   ): Promise<ChatCompletion> {
-    try {
-      return await this.groq.chat.completions.create({
-        messages: messages,
+    const response = await this.groq.chat.completions
+      .create({
+        messages,
         model: 'llama-3.1-8b-instant',
         temperature: 0.7,
         max_completion_tokens: 150,
         stop: null,
+      })
+      .catch((error) => {
+        this.logger.error(error);
+        throw new InternalServerErrorException('AI service unavailable');
       });
-    } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException('AI service unavailable');
-    }
+
+    return response;
   }
 
   async deleteUserChat(chatSessionId: number, userId: number): Promise<string> {
     await this.usersRepository.findById(userId);
 
-    await this.prisma.chatSession
-      .delete({
-        where: { id: chatSessionId, userId: userId },
-      })
-      .catch((e) => {
-        if (
-          e instanceof Prisma.PrismaClientKnownRequestError &&
-          e.code === 'P2025'
-        ) {
-          this.logger.error(e);
-          throw new NotFoundException('Chat session not found');
-        }
-        throw e;
-      });
+    const session = await this.prisma.chatSession.findFirst({
+      where: { id: chatSessionId, userId },
+    });
+    if (!session) throw new NotFoundException('Chat session not found');
+
+    await this.prisma.chatSession.delete({
+      where: { id: chatSessionId, userId },
+    });
 
     return 'Chat session deleted successfully';
   }
@@ -108,68 +87,40 @@ export class GroqRepository {
     const message = response.choices[0].message.content;
     if (!message) {
       this.logger.error('error no chat response provided');
-
       throw new InternalServerErrorException('No chat response provided');
     }
     return message;
   }
 
   async findChatSessionById(chatSessionId: number, userId: number) {
-    try {
-      return await this.prisma.chatSession.findFirstOrThrow({
-        where: { id: chatSessionId, userId: userId },
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException('Chat session not found');
-        }
-      }
-      this.logger.error(
-        `Failed to find chat session with id ${chatSessionId}`,
-        error,
-      );
-      throw new InternalServerErrorException('Failed to find chat session');
-    }
+    const session = await this.prisma.chatSession.findFirst({
+      where: { id: chatSessionId, userId },
+    });
+    if (!session) throw new NotFoundException('Chat session not found');
+    return session;
   }
 
   async findMessagesBySessionId(
     chatSessionId: number,
   ): Promise<MessagesResDTO[]> {
-    try {
-      return await this.prisma.messages.findMany({
-        where: { chatSessionID: chatSessionId },
-        orderBy: { createdAt: 'asc' },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Failed to find messages for chat session ${chatSessionId}`,
-        error,
-      );
-      throw new InternalServerErrorException('Failed to find messages');
-    }
+    return this.prisma.messages.findMany({
+      where: { chatSessionID: chatSessionId },
+      orderBy: { createdAt: 'asc' },
+    });
   }
 
   async updateChatSessionTimestamp(
     chatSessionId: number,
     userId: number,
   ): Promise<ChatSessionResDTO> {
-    try {
-      return await this.prisma.chatSession.update({
-        where: { id: chatSessionId, userId: userId },
-        data: { updatedAt: new Date() },
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        if (error.code === 'P2025') {
-          throw new NotFoundException('Chat session not found');
-        }
-      }
-      this.logger.error(
-        `Failed to update chat session ${chatSessionId}`,
-        error,
-      );
-      throw new InternalServerErrorException('Failed to update chat session');
-    }
+    const session = await this.prisma.chatSession.findFirst({
+      where: { id: chatSessionId, userId },
+    });
+    if (!session) throw new NotFoundException('Chat session not found');
+
+    return this.prisma.chatSession.update({
+      where: { id: chatSessionId, userId },
+      data: { updatedAt: new Date() },
+    });
   }
 }

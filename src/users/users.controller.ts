@@ -6,10 +6,12 @@ import {
   Patch,
   Param,
   Delete,
+  UseFilters,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/in/create-user.dto';
 import { UpdateUserDto } from './dto/in/update-user.dto';
+import { HttpExceptionFilter } from 'src/HttpExceptionFilter';
 
 @Controller('users')
 export class UsersController {
@@ -26,6 +28,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @UseFilters(HttpExceptionFilter)
   findById(@Param('id') id: string) {
     return this.usersService.findById(+id);
   }
@@ -36,6 +39,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @UseFilters(HttpExceptionFilter)
   remove(@Param('id') id: string) {
     return this.usersService.removeById(+id);
   }
