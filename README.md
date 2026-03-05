@@ -18,7 +18,15 @@ Before running the project, you must create a:
 The `.env` file must follow this structure:
 
 ```env
-DATABASE_URL="your_database_url" or get at: https://www.prisma.io/
+DATABASE_URL="your_database_url" # Get your database URL from: https://www.prisma.io/
 APP_PORT=3000
-GROQ_API_KEY="your_groq_api_key" get at: https://console.groq.com/home
+GROQ_API_KEY="your_groq_api_key" # Generate your API key at: https://console.groq.com/keys
+```
 
+## To Run the Project
+
+Start the application in development mode:
+
+```bash
+npm run start:dev
+```
