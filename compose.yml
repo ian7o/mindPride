@@ -1,0 +1,60 @@
+name: mindpride
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: mindpride
+    # Published on the host so external tools (psql, DBeaver, a host-run app)
+    # can reach it. Defaults to 5433 because 5432 is usually taken by a local
+    # Postgres; override with DB_PORT in .env.
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "mindpride"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # One-shot: applies prisma migrations, then exits 0. Uses the Dockerfile
+  # builder stage because prisma.config.ts lives at the repo root and is not
+  # copied into the runtime image.
+  migrate:
+    build:
+      context: .
+      target: builder
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/mindpride
+    depends_on:
+      db:
+        condition: service_healthy
+    command: npx prisma migrate deploy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      target: runtime
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      APP_PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/mindpride
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  db-data:

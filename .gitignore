@@ -39,7 +39,7 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
-.env*
+.env
 
 # temp directory
 .temp
@@ -53,8 +53,6 @@ pids
 
 
 /secrets
-Dockerfile
-compose.yml
 .gitignore
 .dockerIgnore
 .continue
