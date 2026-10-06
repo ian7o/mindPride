@@ -3,7 +3,7 @@
 NestJS REST API that stores users in Postgres and exposes a psychology support chat assistant
 backed by the Groq API.
 
-- [TECHNICAL.md](./TECHNICAL.md) — architecture, Docker, chat flow
+- [TECHNICAL.md](./TECHNICAL.md) — architecture, chat flow
 
 ## Requirements
 
